@@ -1,0 +1,489 @@
+:linkcss:
+:stylesdir: css
+:stylesheet: mystyle.css
+:twoinches: width='360'
+:full-width: width='100%'
+:three-quarters-width: width='75%'
+:two-thirds-width: width='66%'
+:half-width: width='50%'
+:half-size:
+:one-thirds-width: width='33%'
+:one-quarters-width: width='25%'
+:thumbnail: width='60'
+:imagesdir: images
+:sourcesdir: codes
+:icons: font
+:hide-uri-scheme!:
+:figure-caption: 図
+:example-caption: リスト
+:table-caption: 表
+:appendix-caption: 付録
+:xrefstyle: short
+:section-refsig:
+:chapter-refsig:
+
+:toc:
+
+= lox09
+
+コンパイラ、第9,10回の講義用Assignmentです。
+
+== breakfast言語
+
+「breakfast言語」は、朝食の構成を示すためのおもちゃ言語。
+
+
+[example]
+--
+たとえば、「ポーチドエッグをイングリッシュマフィンに添えて」という表記。
+
+poached eggs with English muffine on the side
+--
+
+一定の規則に基いて、このような文を構成する（生成する）には、どうしたらよいだろうか。
+
+== 文法の規則
+
+プログラム言語の文法を、トークンの並びの規則として定義する。
+
+具体的な文は無限に考えられるので、列挙することはできないので、トークンの並べ方の規則（生成規則）を考える。
+
+=== 文脈自由文法  -- 5.1
+
+終端記号、非終端記号、生成規則、開始記号で定義される文法のこと。
+
+=== 生成規則（Production） -- 5.1.1
+
+生成規則（Production）:: 文を導出するための規則の集まり。頭部（Head）と本文（Body）からなる。本文が「何を生成するのか」を表すもので、記号の並びになる。頭部はそれを呼部（使う）ための名前としての記号。
+終端記号（Terminal Symbol）:: その文法のアルファベット。スキャナを用意しているなら、トークンがアルファベット。生成規則の本文が終端記号だけになっていれば、規則による変換はそこまでで終わり。
+非終端記号（Non-terminal Symbol）:: 文法を組み立てるための構造の規則を挿す名前（頭部にくる名前）。非終端記号を頭部に持つ規則の本文にまだ非終端記号が含まれていれば、その非終端記号を頭部に持つ別の規則を適用することによって再び生成（別の構文に変換）できる。
+
+生成規則は、プログラム（あるいは文や式など、解析を始めたい対象の全体）を定義する非終端記号から始める（これを開始記号と呼ぶ）、そこから生成（規則を適用した変換）を繰り返した結果、終端記号の並びに到達できるような規則の集まりになっている。
+
+逆に、プログラム等を解析する場合には、その対象となる入力トークンの並びを、非終端記号で始まる規則のうち、出発記号から規則を順次当てはめることを繰り返す。トークンの並びをすべて処理できれば、生成規則に則っている（つまりその生成規則で定義した文法に従っている）ことになり、文法エラーのないトークンの並びと判定できる。
+
+
+== 文法の表記方法
+
+文法の表方法としてよく使われるものが、BNFとその拡張であるEBNF。
+
+=== バッカス-ナウア記法（Backus–Naur Form: BNF）
+
+文脈自由文法を定義するのに用いるメタ言語のひとつ。
+ジョン・バッカスとピーター・ナウアがALGOL 60 の文法定義のために考案。
+
+.テキストでの記法とBNFの説明でよく使われる記法との違い
+* `→` の代わりに `::=` を使う
+* 行末にセミコロンを書かない
+
+[[ex01]]
+[source]
+.BNF記法の違い
+--
+<symbol> → <expression with symbols> ; # <1>
+<symbol> ::= <expression with symbols>  # <2>
+--
+<1> テキストの記法
+<2> 別の記法
+
+=== 演習：BNFを使ってbrakfast言語の文法を表す
+
+. このAssignmentの中にある `codes` ディレクトリにある `breakfast01.bnf` を編集して、テキストに記載されているbrakfast言語の文法を書きなさい。
+** 日本語のテキストには邦訳も併記されているが、書くのは「 -- 上記の対訳です -- 」の上まででよい。
+** 「 <<ex01>> 」の<2> の記法を使う。
+** TABコードは使わず、スペースを使う。
+** スペースも含め、すべて半角文字を使う。
+. 作成できたら、このリポジトリをコミットしなさい。
+** まずは、 status を確認する。
+** コミットメッセージは「add breakfast01.bnf」でよいでしょう。
+** 忘れそうなら、プッシュしておいてもよい。
+
+[source]
+.breakfast01.bnf
+----
+include::{sourcesdir}/breakfast01.bnf[]
+----
+
+[NOTE]
+--
+Chromeブラウザで、Asciidoctor.js機能拡張を入れてあれば、プレビューで上記に `breakfast01.bnf` が表示される。
+--
+
+=== EBNF：拡張バッカス-ナウア記法（Extended Backus–Naur Form） - 5.1.2
+
+BNFの拡張記法。
+ニクラウス・ヴィルト（プログラミング言語PASCALの作者）が拡張を提案。
+
+標準化されたEBNFのひとつがISO-14977。つまりEBNFは、現在はISOの規格になっている。
+
+.EBNFにおける拡張（補助構文）
+`コメント`:: `#` から行末まで（ツールによっては `/* ... */` の場合もある）
+`null`:: 0文字の文字列、空文字列
+`*` :: 0回以上の繰り返し
+`+` :: 1回以上の繰り返し
+`?`:: オプション（あるかないか）
+正規表現:: 正規表現も使える（らしい）
+
+
+=== 演習：EBNFを使ってbrakfast言語の文法を表す
+
+. このAssignmentの中にある `codes` ディレクトリにある `breakfast02.bnf` を編集して、テキストに記載されている補助構文を適用した後のbrakfast言語の文法を書きなさい。
+. 作成できたら、このリポジトリをコミットしなさい。
+** まずは、 status を確認する。
+** コミットメッセージは「add breakfast02.bnf」でよいでしょう。
+** 忘れそうなら、プッシュしておいてもよい。
+
+[source]
+.breakfast02.bnf
+----
+include::{sourcesdir}/breakfast02.bnf[]
+----
+
+
+== BNFのテキストと図式化
+
+=== Railroad Diagram Editor（Generator）
+
+BNFを流れ図のように表現する方法とその図を生成するツールやWebサービスがある。
+
+Railroad Diagram Generatorer(1):: http://bottlecaps.de/rr/ui
+Railroad-diagram Generator(2):: https://tabatkins.github.io/railroad-diagrams/
+
+
+=== 演習：Railroad Diagram Generatorerを使ってみる
+
+. `codes` ディレクトリに、XML（やHTML）のコメントの構文のBNF <<comment.bnf>> を作成する（下記）。
+. Railroad Diagram Generatorer(1)のウェブページを開く。
+. 「Edit Grammer」タブを開く。
+. ページ末尾の「ファイルを選択」で、作成した `comment.bnf` を選択して「Load」する。
+** Loadできると、作成したコードが表示される。
+. 作成したコードが表示された文法記述のスナップショットを `images` ディレクトリの `comment_grammer.png` と置き換えなさい。
+** 置き換えられれば、下記の <<comment_grammer.png>> が置き換えた図に変わるはず（ページの再読み込みが必要かも）。
+. 「View Diagram」タブを開くと、読み込んだBNFのRailroad Diagramが表示される。
+** エラーが表示されたら「Edit Grammer」タブに戻って、修正しなさい（修正後の記述は「save」できる）。
+. 表示されたダイアグラムのスナップショットを `images` ディレクトリの `comment_diagram.png` と置き換えなさい。
+. 作成できたら、このリポジトリをコミットしなさい。
+** まずは、 status を確認する。
+** コミットメッセージは「generate railroad diagram of comment.bnf」でよいでしょう。
+** 忘れそうなら、プッシュしておいてもよい。
+
+
+[[comment.bnf]]
+[source,xml]
+.comment.bnf
+----
+Comment ::= '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->'
+----
+
+[[comment_grammer.png]]
+.comment_grammer.png
+--
+image::comment_grammer.png[{full-width}]
+--
+
+[[comment_diagram.png]]
+.comment_diagram.png
+--
+image::comment_diagram.png[{full-width}]
+--
+
+=== 演習：breakfast言語の文法をRailroad Diagramで表す
+
+. Railroad Diagram Generatorer(1)に、前の演習で作成した `breakfast01.bnf` をLoadする。
+. 「View Diagram」タブを開くと、読み込んだBNFのRailroad Diagramが作成される。
+** エラーが表示されたら「Edit Grammer」タブに戻って、修正しなさい（修正後の記述は「save」できる）。
+. ページ右にある「Download Diagram」から、「XHTML」「PNG」「embedded」をチェックして、ダイアグラムを保存しなさい。
+** 保存する場所はこのファイル（README.adoc）と同じでよい。
+** Chromeブラウザで下記リンクを辿って生成したページが参照できることを確認しなさい。
+. ページが参照できる場所に保存できていることをできたら、このリポジトリをコミットしなさい。
+** まずは、 status を確認する。
+** コミットメッセージは「generate railroad diagram of breakfast01.bnf」でよいでしょう。
+** 忘れそうなら、プッシュしておいてもよい。
+
+.生成したページへのリンク
+link:breakfast01.xhtml[breakfast01.bnfのRailroad Diagram]
+
+
+[WARNING]
+--
+ここまでの演習結果について、コミットしたものをまだプッシュしていないようなら、プッシュしておきなさい。
+
+プッシュが成功していることを、このAssignmentのリモート側（GitHub側の）リポジトリを参照して確認しておきなさい。
+--
+
+[NOTE]
+--
+`breakfast01.bnf` から生成したページには、入力を解釈したEBNFも表示されている。
+
+これが `breakfast02.bnf` と一致していることを確認しておきなさい。
+--
+
+== Loxの式の文法 -- 5.1.3
+
+Loxの文法のうち、まずは、次のような式を書くための文法を検討する。
+そして、この式を表すのに必要な分の文法について処理できるようになったら、他の機能について拡張していく。
+
+[source]
+----
+1 - (2 * 3) < 4 == false
+----
+
+式（expression）として使える構成要素は次のようなものになる。
+
+.式として使える構成要素
+リテラル（literal）::  数（numbers）、文字列（strings）、ブール値（boolean）、nil。
+単項式（unary）:: 前置で論理否定を実行する `!` 、前置で正負を逆転する `-` を伴う式。
+2項式（binary）:: 中置演算子（ `+` 、 `-` 、 `*` 、 `/` ）または、論理演算子（ `==` 、 `!=` 、 `<` 、 `<=` 、 `>=` ）を伴う式。
+丸カッコ（grouping）:: `(` と `)` で囲まれた式。
+
+
+NOTE: 式の定義に式が含まれている（再帰的な定義になっている）ことに注意。
+
+=== 演習：Loxの式の文法をBNFで表す
+
+. このAssignmentの中にある `codes` ディレクトリに `expression01.bnf` を作成しなさい。
+. 作成したファイルに、テキストの 5.1.3 に記載されている式の文法を書きなさい。
+** 日本語のテキストには邦訳も併記されているが、書くのは「 -- 上記の対訳です -- 」の上まででよい。
+** 「 <<ex01>> 」の<2> の記法を使う。
+. 作成できたら、このリポジトリをコミットしなさい。
+** まずは、 status を確認する。
+** コミットメッセージは「add expression01.bnf」でよいでしょう。
+** 忘れそうなら、プッシュしておいてもよい。
+
+[source]
+.expression01.bnf
+----
+include::{sourcesdir}/expression01.bnf[]
+----
+
+[NOTE]
+--
+作成して保存できていれば、上記でコードはAsciidoctor.js機能拡張を入れたChromeブラウザでプレビューできるはず。
+--
+
+== 構文木を実装する -- 5.2
+
+
+[NOTE]
+--
+この演習でコードを作成する際には、これまで作成した lox01 Assignmentの中のコードに追加する。
+--
+
+=== Loxの式の要素用のJavaソースコードを生成する -- 5.2.2
+
+Loxの式の要素ごとにそれらを木の要素にするためのクラスを用意する。
+しかし、似たようなクラスを21個も手作業でつくるのは馬鹿げている。
+
+そこで、 `GenerateAst` クラスを使って、これらのクラスのJavaファイルを生成する（作成しているインタプリタの一部ではないことに注意）。
+
+たとえば、 `"Binary : Expr left, Token operator, Expr right"` のような文字列から、 `Expr.java` の中に次のようなコードを生成する。
+
+[source,java]
+.Expr.java
+----
+  static class Binary extends Expr {
+    Binary(Expr left, Token operator, Expr right) {
+      this.left = left;
+      this.operator = operator;
+      this.right = right;
+    }
+
+   final Expr left;
+    final Token operator;
+    final Expr right;
+  }
+----
+
+=== 演習：コードを生成するプログラムを作成する
+
+テキストの5.2.2を読みながら、「lox01」リポジトリで `GenerateAst.java` を作成しなさい。
+
+. `com\craftinginterpreters\lox` の並びに `tool` ディレクトリを作りなさい（MSYS2やGit Bashのターミナルなら区切りは `/` に読み替える）。
+** 次のようなコマンドで、 `craftinginterpreters` ディレクトリの中に `tool` ディレクトリを作る。
+** `mkdir com\craftinginterpreters\tool`
+. 作成した `tool` ディレクトリに `GenerateAst.java` を作成しなさい。
+. テキストの5.2.2を参照して、`GenerateAst.java` にコードを追加しなさい。
+** import文の追加、 `GenerateAst` クラスの追加。
+** `main` メソッドに `defineAst` メソッドの呼び出しの追加。
+** 上記の呼び出しにおけるパラメータが、生成するコードに使うクラスやメンバ変数の元になっていることを確認しなさい。
+** `defineAst` メソッドの追加。
+** `defineAst` メソッドに、クラスの定義の生成コードを追加。
+** `defineType` メソッドの追加。
+
+作成できたら、コンパイルしなしさい。
+
+[souece,console]
+----
+# java ディレクトリ（中にcomディレクトリがある場所）に移動する
+# dir（もしくはls）コマンドで中に com ディレクトリがあることを確認する
+javac com/craftinginterpreters/tool/GenerateAst.java
+----
+
+コンパイルできたら、実行しなさい。
+
+初めて実行するときは、出力ディレクトリに実害のない場所を指定して実行し、 `Expr.java` が期待通り生成できているか確認しなさい。
+
+[souece,console]
+----
+# java ディレクトリ（comディレクトリがある場所）で
+java com.craftinginterpreters.tool.GenerateAst <出力先ディレクトリ>
+----
+
+次に、出力先を、`com\craftinginterpreters\lox` になるよう調整して実行しなさい。
+
+
+[souece,console]
+.コマンドプロンプトの場合
+----
+# java ディレクトリ（comディレクトリがある場所）で
+java com.craftinginterpreters.tool.GenerateAst com\craftinginterpreters\lox
+----
+
+[souece,console]
+.MSYS2やGit Bashの場合
+----
+# java ディレクトリ（comディレクトリがある場所）で
+java com.craftinginterpreters.tool.GenerateAst com/craftinginterpreters/lox
+----
+
+実行後に、 `lox` ディレクトリに `Expr.java` が作成されていること、内容が期待通りのものかを確認する。
+
+. 作成できたら、「lox01」リポジトリをコミットしなさい。
+** まずは、 status を確認する。
+** コミットメッセージは「add GenerateAst.java, generate Expr.java」などでよいでしょう。
+** 忘れそうなら、「lox01」をプッシュしておいてもよい。
+
+
+== 構文木を使う -- 5.3
+
+式を扱うには、式の要素ごとの型を扱う必要がある。
+
+式の要素は多様（Binary, Unary, ... etc.）なので、これらに対応する型も多様になる。
+これらに、新しい型を追加するのは容易だが（継承すればよい）、すべての型にメソッドの実装を追加するのは手間がかかる。
+
+
+=== Visitorパターン -- 5.3.2
+
+
+テキストの5.3.2を通読して、Visitorパターンの概要を把握しなさい。
+
+`Expr.java` に次のようなコードを追加して、Visitorパターンを利用できるようにしたい。
+
+[source,java]
+.Expr.java（Visitorの追加）
+----
+abstract class Expr {
+  interface Visitor<R> {
+    R visitBinaryExpr(Binary expr);
+    // ...
+  }
+
+  static class Binary extends Expr {
+    Binary(Expr left, Token operator, Expr right) {
+      // ...
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitBinaryExpr(this);
+    }
+
+    final Expr left;
+    // ...
+  }
+
+  abstract <R> R accept(Visitor<R> visitor);
+}
+----
+
+=== 演習：Visitorを式の処理に追加する -- 5.3.3
+
+テキストの5.3.3を読みながら、「lox01」リポジトリに、Visitorパターンを適用するコードを追加しなさい。
+
+. `GenerateAst.java` を開く。
+. `defineAst` メソッドに `defineVisitor` の呼び出しを追加する。
+** それぞれの型用のvisitメソッドが並ぶinterfaceを作成している。
+. `defineAst` メソッドの後に `defineVisitor` メソッドを定義する。
+** すべての型についてそれぞれの `visit` メソッドを作成している。
+. `defineAst` メソッドの末尾に基底クラスの `accept` メソッドを追加する。
+. 生成されるクラスのフィールド定義の前に `accept` メソッドを追加する。
+** これは基底クラス（ここでは `Expr` クラス）の `accept` メソッドをオーバーライドしている。
+
+
+. 作成できたら、「lox01」リポジトリをコミットしなさい。
+** まずは、 status を確認する。
+** コミットメッセージは「modify GenerateAst.java for visitor」などでよいでしょう。
+** 忘れそうなら、「lox01」プッシュしておいてもよい。
+
+=== 演習：構文木の可視化
+
+次のサイトは、構文木の可視化を試すことができる。
+JavaScriptの式で、数値と四則演算とカッコを使ったものが試せる。
+変数は使えない。グループのカッコは書くことはできるが、できあがる図は適用後のツリー（カッコのないツリー）になる。
+
+JavaScriptの構文木を可視化するツールのウェブサイト:: http://nhiro.org/learn_language/AST-Visualization-on-browser.html
+
+. 0から9までの数字を使った1桁または2桁の整数と四則演算とカッコを使った式を考えなさい。
+** 4つの演算子をそれぞれ必ず1回は使い、カッコも必ず使うこと。
+. その式を上記のサイトに入力して、JSONと図の表示を得なさい。
+. `codes` ディレクトリにある `ast.json` を、上記サイトで得たJSONコードで置き換えなさい。
+. `images` ディレクトリにある `ast.png` を、上記サイトで得た図の部分をpngで保存したもので置き換えなさい。
+** 画像を右クリックしてブラウザのポップアップメニューから「別名で保存する」などを使ってファイルに保存できる。
+
+[source,json]
+.ast.json（保存したもので置き換わる）
+----
+include::{sourcesdir}/ast.json[]
+----
+
+.ast.png（保存したもので置き換わる）
+image::ast.png[]
+
+. 作成できたら、このリポジトリをコミットしなさい。
+** まずは、 status を確認する。
+** コミットメッセージは「replace ast.json, ast.png」などでよいでしょう。
+** 忘れそうなら、このリポジトリをプッシュしておいてもよい。
+
+
+
+=== 演習：プリティプリンタ -- 5.4
+
+生成した構文木を視覚的に把握するためのプログラムを作る。
+テキストの5.4を読みながら、「lox01」リポジトリに、プリティプリンタ用のコードを追加しなさい。
+
+. `lox` ディレクトリに `AstPrinter.java` を作成する。
+. `AstPrinter` クラスを定義する。
+. `print` メソッドを追加する。
+. `print` メソッドの後に、これまでに作った式の要素用の型のためのvisitメソッドを追加する。
+. 追加したvisitメソッドの後に、 `parenthesize` メソッドを追加する。
+. 追加した `parenthesize` メソッドの後に、 `main` メソッドを追加する。
+
+
+作成できたら、コンパイルしなしさい。
+
+[souece,console]
+----
+# java ディレクトリ（中にcomディレクトリがある場所）に移動する
+# dir（もしくはls）コマンドで中に com ディレクトリがあることを確認する
+javac com/craftinginterpreters/lox/*.java
+----
+
+コンパイルできたら、実行しなさい。
+
+[souece,console]
+----
+# java ディレクトリ（comディレクトリがある場所）で
+java com.craftinginterpreters.lox.AstPrinter
+
+(* (- 123) (group 45.67))
+----
+
+. 作成できたら、「lox01」リポジトリをコミットしなさい。
+** まずは、 status を確認する。
+** コミットメッセージは「add AstPrinter.java」などでよいでしょう。
+
+
+[IMPORTANT]
+--
+ここまでの演習結果について、「lox01」「lox09」ともにコミットとプッシュを確認しておく。
+--

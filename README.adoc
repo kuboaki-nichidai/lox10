@@ -159,13 +159,6 @@ Chromeブラウザで、Asciidoctor.js機能拡張を入れてあれば、プレ
 javac com/craftinginterpreters/lox/Lox.java
 ----
 
-コンパイルできたら、実行しなさい。
-
-[souece,console]
-----
-java com.craftinginterpreters.lox.Lox <プログラム>
-----
-
 === 演習：Parserの動作を確認する
 
 . このファイル（README.adoc）を編集して、動作させた例と、結果を下記に書き込みなさい。
@@ -173,6 +166,12 @@ java com.craftinginterpreters.lox.Lox <プログラム>
 [source,console]
 ----
 ここに、Loxを実行したときのコマンドライン、その動作結果をテキストで貼り付ける。
+例：
+$ java com.craftinginterpreters.lox.Lox
+> 5 - 3 - 1
+(- (- 5.0 3.0) 1.0)
+----
+
 ----
 
 作成できたら、一度「lox01」をコミットしなさい。

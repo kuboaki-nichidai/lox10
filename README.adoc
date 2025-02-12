@@ -75,7 +75,7 @@ include::{sourcesdir}/lox_expr.bnf[]
 
 [NOTE]
 --
-Chromeブラウザで、Asciidoctor.js機能拡張を入れてあれば、プレビューで上記に `breakfast01.bnf` が表示される。
+Chromeブラウザで、Asciidoctor.js機能拡張を入れてあれば、プレビューで上記に `lox_expr.bnf` が表示される。
 --
 
 
